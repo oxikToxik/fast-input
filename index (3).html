@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Быстрый ввод — Ветеринар на дом</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f2f6f5;--sf:#fff;--ink:#14302b;--mute:#5d7570;--line:#d6e3e0;--ac:#0f6b5c;--acink:#fff;--ok:#dff1eb;--okline:#7fc4b2;--warn:#b7791f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a18;--sf:#15262a;--ink:#e3f0ed;--mute:#8fa9a4;--line:#26403f;--ac:#3fb59f;--acink:#06201b;--ok:#15423a;--okline:#2f8a79;--warn:#e0a94a}}
+:root[data-theme="dark"]{--bg:#0e1a18;--sf:#15262a;--ink:#e3f0ed;--mute:#8fa9a4;--line:#26403f;--ac:#3fb59f;--acink:#06201b;--ok:#15423a;--okline:#2f8a79;--warn:#e0a94a}
+*{box-sizing:border-box}
+html,body{margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 "Golos Text",system-ui,sans-serif;padding:16px}
+h1{font-size:22px;margin:0 0 4px;font-weight:600}
+.sub{color:var(--mute);margin:0 0 16px;max-width:62ch}
+.wrap{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);max-width:1180px;margin:0 auto}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,4fr) minmax(0,6fr);align-items:start}.left{position:sticky;top:16px}}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:10px;padding:14px}
+textarea{width:100%;min-height:130px;resize:vertical;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+textarea:focus,input:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.lbl{font-weight:600;margin:0 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip,.btn{font:inherit;border-radius:8px;border:1px solid var(--line);background:var(--sf);color:var(--ink);padding:7px 10px;cursor:pointer}
+.chip:hover{border-color:var(--ac)}
+.btn.main{background:var(--ac);color:var(--acink);border-color:var(--ac);font-weight:600}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.stat{color:var(--mute);margin-left:auto}
+.block{margin-bottom:14px}
+.block h2{font-size:14px;margin:0 0 8px;font-weight:600;color:var(--ac)}
+.grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.f.w{grid-column:span 2}
+.f label{display:block;font-size:12px;color:var(--mute);margin-bottom:2px}
+.f input{width:100%;font:inherit;color:var(--ink);background:var(--sf);border:1px solid var(--line);border-radius:7px;padding:7px 8px}
+.f.ok input{background:var(--ok);border-color:var(--okline)}
+.f.chk input{border-color:var(--warn)}
+.f.chk label::after{content:" · проверьте";color:var(--warn)}
+.tb{width:100%;border-collapse:collapse;font-size:13px}
+.tb th,.tb td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line)}
+.tbw{overflow-x:auto}
+.note{color:var(--mute);font-size:13px;margin-top:10px}
+.f{position:relative}
+.cp{position:absolute;right:3px;top:0;border:0;background:none;color:var(--mute);cursor:pointer;font-size:15px;padding:0 4px;line-height:1.3}
+.cp:hover{color:var(--ac)}
+.f.cur input{outline:2px solid var(--ac)}
+#toast{color:var(--ac);font-weight:600;min-height:1.4em;display:block;margin-top:8px}
+.hint{background:var(--ok);border:1px solid var(--okline);border-radius:8px;padding:8px 10px;margin:0 0 12px;font-size:13px}
+</style>
+</head>
+<body>
+<h1>Быстрый ввод вызова</h1>
+<p class="sub">Оператор пишет или вставляет заявку одной строкой, как привык. Система раскладывает её по полям карточки в том порядке, в котором задаются вопросы. Зелёные поля распознаны, остальные оператор дозаполняет.</p>
+<p class="hint"><b>Режим без API.</b> Если CRM не даёт прямого подключения, оператор переносит готовую карточку в CRM копированием: одно поле кнопкой ⧉, все поля разом (через Tab в одну строку таблицы) или по очереди кнопкой «Следующее поле».</p>
+<div class="wrap">
+  <div class="left">
+    <div class="card">
+      <p class="lbl">Заявка одной строкой</p>
+      <textarea id="src" placeholder="кастрация кота, 20.06 в 18-20, Анжела +375 33 327-24-70, Твикс, бп, 1г, ул Комсомольская 3, кв 2, 140р"></textarea>
+      <div class="chips" id="chips"></div>
+      <div class="row">
+        <button class="btn" id="clr">Очистить</button>
+        <button class="btn main" id="save">Сохранить вызов</button>
+        <span class="stat" id="stat"></span>
+      </div>
+      <div class="row">
+        <button class="btn" id="next">Следующее поле</button>
+        <button class="btn" id="all">Копировать всё строкой</button>
+      </div>
+      <span id="toast" role="status"></span>
+      <p class="note">Примеры взяты из вашей базы. Последний пример записан хаотично: так видно, что система разбирает и что оставляет оператору.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card" id="form"></div>
+    <div class="card tbw" id="log" style="margin-top:16px;display:none">
+      <p class="lbl">Сохранённые вызовы (демо, в этой сессии) <button class="btn" id="tbl" style="margin-left:8px">Копировать таблицу</button></p>
+      <table class="tb"><thead><tr><th>Телефон</th><th>Клиент</th><th>Питомец</th><th>Услуга</th><th>Адрес</th><th>Цена</th></tr></thead><tbody id="rows"></tbody></table>
+    </div>
+  </div>
+</div>
+<script>
+var BLOCKS=[
+["Звонок и клиент",[["date_call","Дата звонка"],["phone","Телефон"],["name","Имя клиента"],["phone2","Доп. телефон"],["source","Источник контакта"]]],
+["Питомец",[["species","Вид питомца"],["pet","Кличка"],["breed","Порода"],["age","Возраст"],["weight","Вес"]]],
+["Запрос",[["service","Услуга",1],["desc","Описание / симптомы",1]]],
+["Адрес",[["sc","С/с"],["street","Улица / нас. пункт",1],["house","Дом"],["corp","Корпус"],["pod","Подъезд"],["code","Код подъезда"],["floor","Этаж"],["flat","Квартира"]]],
+["Визит и оплата",[["date_visit","Дата услуги"],["time_visit","Время услуги"],["price","Стоимость"],["instr","Особые инструкции врачу",1]]]];
+var CHECK={name:1,pet:1,desc:1,breed:1};
+var EX=[
+"кастрация кота, 20.06 в 18-20, Анжела +375 33 327-24-70, Твикс, бп, 1г, Юзофовский с/с, д. Комсомолец, ул Комсомольская 3, кв 2, под и этаж 1, 140р",
+"кастрация собаки, 19.06 в 12-14, ЗВОНИТЬ ПЕРЕД ВЫЕЗДОМ, КАРТА, Ольга +375 44 526-07-52, Барни, мальтипу, 8мес, 4кг, аг Колодищи, ул Кленовая Алея 44, кв 32, под 3, этаж 2, 245р",
+"лечение кота, 18.06 в 23-1, ЗВОНИТЬ ПО ПРИЕЗДУ, Дарья +375 25 795-47-41, Бакс, мейнкун, 2мес, запор 2 дня, живот мягкий, ул Маяковского 160, кв 30, под 3, этаж 2, 130р карта",
+"стерил кошки, 18.06 в 14-16, Максим +375 29 886-69-12, Фрея, мейнкун, 1г, 5кг, д. Лесковка, ул Центральная 8Г, корп 2, кв 26, под 1, этаж 9, 208+12+20=240р",
+"кастрация кота, 9.03, Акс 7 м Марина +375 29 756 08 94, семеняко 29 под 2 эт 15 кв 122, 140р",
+"юлия 80293367600 вет фельшер таборы собака 2 кг узи бак"];
+var VERB={стерил:"Стерилизация",кастрац:"Кастрация",усып:"Усыпление",эвтан:"Эвтаназия",эвтаз:"Эвтаназия",эвтоназ:"Эвтаназия",вакц:"Вакцинация",лечен:"Лечение",родовспом:"Родовспоможение"};
+var GEN={кот:"кота",кошка:"кошки",собака:"собаки"};
+var STOP=/^(кот|кота|коты|котов|котика|кошка|кошки|кошек|кошке|кошку|собака|собаки|соб|собаку|клиент)$/i;
+var BREED=/^(мейнкун|британ|брит|шотл|тайск|метис|абес|абисс|мальтипу|чихуа|бп|беспородн|ориентал|сиам|такс|йорк|лабрадор|хаск)/i;
+function species(w){w=w.toLowerCase();if(/^кош/.test(w))return"кошка";if(/^кот/.test(w))return"кот";if(/^соб/.test(w))return"собака";return""}
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):s}
+function parse(raw){
+ var t=" "+raw.replace(/\s+/g," ")+" ",o={},m;
+ function cut(re,fn){m=t.match(re);if(m){t=t.replace(m[0]," | ");fn(m);return 1}return 0}
+ var ph=[],re=/(?:\+?375|\b80)[\s-]?\(?(\d{2})\)?[\s-]?(\d{3})[\s-]?(\d{2})[\s-]?(\d{2})(?!\d)/g;
+ t=t.replace(re,function(_,a,b,c,d){ph.push("+375 "+a+" "+b+"-"+c+"-"+d);return" @@ "});
+ o.phone=ph[0]||"";o.phone2=ph[1]||"";
+ var yr=String(new Date().getFullYear());
+ cut(/(?:^|[\s,|])в\s*(\d{1,2})\s*-\s*(\d{1,2})(?!\d)/,function(m){o.time_visit=("0"+m[1]).slice(-2)+":00–"+("0"+m[2]).slice(-2)+":00"});
+ cut(/(?:^|\s)(\d{1,2})\.(\d{2})(?:\.(\d{4}))?(?!\d)/,function(m){o.date_visit=("0"+m[1]).slice(-2)+"."+m[2]+"."+(m[3]||yr)});
+ cut(/(\d+(?:[.,]\d+)?)\s*кг(?![а-яё])/i,function(m){o.weight=m[1].replace(".",",")+" кг"});
+ cut(/(\d+(?:\s*\+\s*\d+)*)(?:\s*=\s*(\d+))?\s*р(?![а-яё])/i,function(m){o.price=(m[2]||m[1].split("+").reduce(function(a,b){return a+ +b},0))+" р"});
+ cut(/под(?:ъезд)?\.?\s*и\s*эт(?:аж)?\.?\s*(\d+)/i,function(m){o.pod=o.floor=m[1]});
+ cut(/(?:^|[\s,|])кв\.?\s*(\d+)/i,function(m){o.flat=m[1]});
+ if(!o.pod)cut(/(?:^|[\s,|])под(?:ъезд)?\.?\s*(\d+)/i,function(m){o.pod=m[1]});
+ if(!o.floor)cut(/(?:^|[\s,|])эт(?:аж)?\.?\s*(\d+)/i,function(m){o.floor=m[1]});
+ cut(/(?:^|[\s,|])корп(?:ус)?\.?\s*(\d+\w?)/i,function(m){o.corp=m[1]});
+ cut(/(?:^|[\s,|])код\s*(\d{3,5})/i,function(m){o.code=m[1]});
+ cut(/([А-ЯЁ][а-яё]+)\s+с\/с/,function(m){o.sc=m[1]+" с/с"});
+ var addr=[];
+ cut(/(?:^|\s)(аг|д|г\.п|пос)\.?\s+([А-ЯЁ][а-яё]+)/,function(m){addr.push(m[1]+". "+m[2])});
+ cut(/(ул|Ул|пр|пер|переулок|просп)\.?\s+([А-ЯЁа-яё.\-]+(?:\s+[А-ЯЁ][а-яё]+)?)(?:\s+(\d+[А-ЯA-Zа-я]?(?:\/\d+)?))?/,function(m){
+   var p={ул:"ул.",Ул:"ул.",пр:"пр-т",просп:"пр-т",пер:"пер.",переулок:"пер."}[m[1]];addr.push(p+" "+m[2]);if(m[3])o.house=m[3]});
+ o.street=addr.join(", ");
+ cut(/(\d+(?:[.,]\d+)?)\s*(мес|м|г|год|года|лет|л)(?![а-яёА-ЯЁ0-9])/,function(m){var n=m[1].replace(",","."),u=m[2];
+   o.age=/мес|^м$/.test(u)?m[1]+" мес":(/^(л|лет)$/.test(u)?m[1]+" лет":m[1]+(+n==1?" год":+n<5?" года":" лет"))});
+ var ins=[],IR=[[/звонить\s+перед\s+выездом/i,"Звонить перед выездом"],[/звонить\s+по\s+приезду/i,"Звонить по приезду"],[/(?:^|[\s,|])карт[аеой]?(?![а-яё])/i,"Оплата картой"],[/(?:^|[\s,|])нал(?![а-яё])/i,"Оплата наличными"],[/паспорт\S*(?:\s+для\s+вахтёра)?/i,"Иметь паспорт (вахтёр)"],[/подписать\s+(?:договор|согласие)/i,"Подписать документ"]];
+ IR.forEach(function(r){if(r[0].test(t)){t=t.replace(r[0]," | ");ins.push(r[1])}});
+ o.instr=ins.join("; ");
+ cut(/(стерил|кастрац|усып|эвтан|эвтаз|эвтоназ|вакц|лечен|родовспом)[а-яё]*(?:\s+(кошки|кошек|кошке|кошку|кошка|кота|котов|кот|собаки|собаку|соб|собака))?/i,function(m){
+   var v=VERB[m[1].toLowerCase()],sp=m[2]?species(m[2]):"";if(sp)o.species=sp;
+   o.service=v+(sp?" "+GEN[sp]:"")});
+ var segs=t.split(/[,|]/).map(function(s){return s.trim()}).filter(Boolean),left=[];
+ segs.forEach(function(s){
+  if(s.indexOf("@@")>=0){
+   var w=s.split(/\s+/),i=w.indexOf("@@"),pick=-1,k;
+   for(k=i-1;k>=0;k--)if(/^[А-Яа-яЁё]+$/.test(w[k])&&!STOP.test(w[k])&&!BREED.test(w[k])){pick=k;break}
+   if(pick<0)for(k=i+1;k<w.length;k++)if(/^[А-Яа-яЁё]+$/.test(w[k])&&!STOP.test(w[k])&&!BREED.test(w[k])){pick=k;break}
+   if(pick>=0){o.name=cap(w[pick]);w.splice(pick,1)}
+   s=w.filter(function(x){return x!=="@@"}).join(" ");if(!s)return}
+  if(STOP.test(s)){if(!o.species)o.species=species(s);return}
+  if(BREED.test(s)){o.breed=/^бп$/i.test(s)?"беспородный":s.toLowerCase();return}
+  if(!o.pet&&/^[А-ЯЁ][а-яё]+$/.test(s)){o.pet=s;return}
+  left.push(s)});
+ left=left.filter(function(s){var sp=species(s);if(/^(кот|кош|соб)[а-яё]*$/i.test(s)&&sp){o.species=o.species||sp;return false}return true});
+ o.desc=left.join(", ");
+ return o}
+var form=document.getElementById("form"),auto={},count=0,total=0;
+BLOCKS.forEach(function(b){var d=document.createElement("div");d.className="block";var h='<h2>'+b[0]+'</h2><div class="grid">';
+ b[1].forEach(function(f){total++;h+='<div class="f'+(f[2]?' w':'')+'" id="w_'+f[0]+'"><label for="i_'+f[0]+'">'+f[1]+'</label><button class="cp" data-k="'+f[0]+'" title="Копировать" aria-label="Копировать: '+f[1]+'">⧉</button><input id="i_'+f[0]+'" autocomplete="off"></div>'});
+ d.innerHTML=h+'</div>';form.appendChild(d)});
+var KEYS=[];BLOCKS.forEach(function(b){b[1].forEach(function(f){KEYS.push(f[0])})});
+function today(){var d=new Date();return("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear()}
+function fill(o){o.date_call=today();var n=0;
+ KEYS.forEach(function(k){var v=o[k]||"",i=document.getElementById("i_"+k),w=document.getElementById("w_"+k);i.value=v;
+  w.classList.toggle("ok",!!v);w.classList.toggle("chk",!!v&&!!CHECK[k]);if(v&&k!=="date_call")n++});
+ document.getElementById("stat").textContent="Распознано полей: "+n+" из "+(KEYS.length-2)}
+function fb(t){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}document.body.removeChild(a)}
+function flash(m){var e=document.getElementById("toast");e.textContent=m;clearTimeout(flash.t);flash.t=setTimeout(function(){e.textContent=""},2200)}
+function cp(t,m){var ok=function(){flash(m||"Скопировано")};
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fb(t);ok()})}else{fb(t);ok()}}
+function val(k){return document.getElementById("i_"+k).value}
+var LAB={};BLOCKS.forEach(function(b){b[1].forEach(function(f){LAB[f[0]]=f[1]})});
+var cur=-1;
+form.addEventListener("click",function(e){var b=e.target.closest(".cp");if(b)cp(val(b.dataset.k),"Скопировано: "+LAB[b.dataset.k])});
+document.getElementById("all").onclick=function(){cp(KEYS.map(val).join("\t"),"Скопирована строка: вставьте в таблицу или CRM")};
+document.getElementById("next").onclick=function(){
+ var list=KEYS.filter(function(k){return val(k)});if(!list.length){flash("Сначала введите заявку");return}
+ cur=(cur+1)%list.length;
+ KEYS.forEach(function(k){document.getElementById("w_"+k).classList.remove("cur")});
+ var k=list[cur];document.getElementById("w_"+k).classList.add("cur");
+ cp(val(k),"Скопировано: "+LAB[k]+" ("+(cur+1)+" из "+list.length+")")};
+var saved=[];
+document.getElementById("tbl").onclick=function(){
+ var h=KEYS.map(function(k){return LAB[k]}).join("\t");
+ cp([h].concat(saved.map(function(r){return KEYS.map(function(k){return r[k]||""}).join("\t")})).join("\n"),"Таблица скопирована: вставьте в Excel или Google Таблицы")};
+var src=document.getElementById("src");
+src.addEventListener("input",function(){cur=-1;fill(parse(src.value))});
+document.getElementById("clr").onclick=function(){src.value="";fill({});src.focus()};
+var ch=document.getElementById("chips");
+EX.forEach(function(e,i){var b=document.createElement("button");b.className="chip";b.textContent="Пример "+(i+1)+(i==5?" (хаотичный)":"");b.onclick=function(){cur=-1;src.value=e;fill(parse(e))};ch.appendChild(b)});
+document.getElementById("save").onclick=function(){
+ var v=function(k){return document.getElementById("i_"+k).value};
+ if(!v("phone")){document.getElementById("stat").textContent="Введите заявку с телефоном";return}
+ var rec={};KEYS.forEach(function(k){rec[k]=v(k)});saved.push(rec);
+ document.getElementById("log").style.display="";
+ var tr=document.createElement("tr"),a=[v("street"),v("house")].filter(Boolean).join(" ");
+ [v("phone"),v("name"),[v("species"),v("pet")].filter(Boolean).join(" "),v("service"),a,v("price")].forEach(function(x){var td=document.createElement("td");td.textContent=x;tr.appendChild(td)});
+ document.getElementById("rows").prepend(tr)};
+fill({});src.value=EX[0];fill(parse(EX[0]));
+</script>
+</body>
+</html>
